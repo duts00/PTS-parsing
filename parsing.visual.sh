@@ -1,5 +1,5 @@
 
-#codigo original, apenas modificado a parte de visual feita pela IA. 
+#codigo original, apenas modificado a parte de visual feita pela IA.
 
 
 #!/bin/bash
