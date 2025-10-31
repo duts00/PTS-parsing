@@ -1,5 +1,4 @@
 #objetivo:
-
 #criar um script para identificar possiveis hosts em um dominio.
 
 # o usuario deve informar o dominio e caso o site possua subdominios na pagina ele deve retornar o IP do hosts.
