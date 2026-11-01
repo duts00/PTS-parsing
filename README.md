@@ -1,40 +1,41 @@
-# parsing.visual.sh & parsing.sh — Estudo de Identificação e Resolução de Hosts
+# parsing.sh — Extração de Hosts e Resolução de IPs
 
-> Dois scripts Bash complementares para estudo em parsing de HTML e resolução de endereços IP a partir de um domínio informado.
+Script Bash para estudo de parsing de HTML e resolução de endereços IP a partir de um domínio. A ferramenta baixa a página do domínio informado, coleta os hosts presentes nos atributos `href` e resolve o IP de cada um, apresentando o resultado em colunas alinhadas.
 
-**Aviso:** Este README documenta os dois scripts **sem alterar nenhum código**. Ambos foram criados para estudo: `parsing.sh` feito de forma normal, `parsing.visual.sh` feito com ajuda de IA apenas para melhorar o visual da saída.
+---
+
+## Aviso Legal
+
+Ferramenta de estudo, destinada ao uso em domínios próprios ou com autorização explícita. Coletar e varrer páginas de terceiros sem permissão pode violar os termos de uso do alvo e a legislação aplicável (no Brasil, Lei 12.737/2012 e Marco Civil da Internet). Respeite o `robots.txt` e as políticas do alvo. Use de forma ética e responsável.
 
 ---
 
 ## Descrição
 
-Os scripts `parsing.sh` e `parsing.visual.sh` permitem:
+O fluxo do script é:
 
-* Coletar URLs presentes em `href` de páginas web de um domínio.
-* Resolver IPs dos hosts encontrados.
+1. Baixa a página do domínio informado (HTTPS, com fallback para HTTP).
+2. Extrai as URLs presentes em atributos `href` e deriva os hosts.
+3. Remove duplicatas e resolve o IP de cada host.
+4. Exibe o resultado em formato tabular.
 
-Diferença principal:
-
-* `parsing.sh`: saída simples, com separadores básicos, feito normalmente pelo autor.
-* `parsing.visual.sh`: saída formatada em colunas, ordenada e com duplicatas removidas, feito com ajuda de IA apenas para aprimorar o visual.
-
-Ambos são exercícios de estudo para aprender parsing básico de HTML e manipulação de saídas no Bash.
+> Nota sobre o histórico: este projeto começou como dois scripts (`parsing.sh`, base, e `parsing.visual.sh`, com formatação aprimorada com auxílio de IA). As duas versões foram unificadas em um único `parsing.sh`, reunindo a lógica de coleta e a saída formatada.
 
 ---
 
 ## Dependências
 
-* `bash`
-* `wget`
-* `grep`
-* `cut`
-* `host`
+- `bash`
+- `wget`
+- `grep`
+- `host` (pacote `dnsutils`)
+- `awk`, `sort` (coreutils)
 
-Instalação em Debian/Ubuntu:
+Instalação em Debian/Ubuntu/Kali:
 
 ```bash
 sudo apt update
-sudo apt install -y wget dnsutils grep coreutils
+sudo apt install -y wget dnsutils grep gawk coreutils
 ```
 
 ---
@@ -44,85 +45,73 @@ sudo apt install -y wget dnsutils grep coreutils
 Tornar executável:
 
 ```bash
-chmod +x parsing.sh parsing.visual.sh
+chmod +x parsing.sh
 ```
 
 Executar:
 
 ```bash
 ./parsing.sh exemplo.com.br
-# ou
-./parsing.visual.sh exemplo.com.br
 ```
 
-Saída esperada de `parsing.sh`:
+### Saída esperada
 
 ```
-[*]>>>> Baixando página de exemplo.com.br... <<<<<[*]
-[*]>>>>>> Hosts encontrados e IPs:
-host1.externo.com has address 93.184.216.34
-................................................../
-host2.externo.net has address 192.0.2.123
-.........................//..................
-```
-
-Saída esperada de `parsing.visual.sh` (mais organizada, apenas visual):
-
-```
-[*] Baixando página de exemplo.com.br ...
+[*] Baixando pagina de exemplo.com.br ...
 [*] Hosts encontrados e IPs:
-HOST                           IP
-----                           --
-host1.externo.com              93.184.216.34
-host2.externo.net              192.0.2.123
-====================
+HOST                                IP
+----                                --
+host1.externo.com                   93.184.216.34
+host2.externo.net                   192.0.2.123
+============================================
+[ok] Concluido.
 ```
 
 ---
 
-## Comportamento em caso de erro
+## Comportamento e Robustez
 
-* Nenhum parâmetro passado → imprime tela de ajuda e encerra.
-* Hosts não resolvidos são ignorados.
-* `parsing.visual.sh` avisa se nenhum host/IP foi encontrado.
-
----
-
-## Limitações
-
-1. Parsing HTML frágil (só href simples).
-2. Apenas HTTP, não HTTPS.
-3. Não varre subdomínios por nome, apenas coleta hrefs da página principal.
-4. Sequencial e sem timeout específico para wget.
-5. Arquivos temporários (`dados` ou `TMP`) podem sobrescrever dados se rodar simultaneamente.
+- Sem argumento: exibe a tela de ajuda e encerra.
+- Segue redirecionamentos e tenta HTTPS antes de HTTP.
+- Possui timeout no download, evitando travamentos.
+- Remove hosts duplicados (`sort -u`).
+- Usa arquivos temporários seguros (`mktemp`), removidos automaticamente ao sair (`trap`).
+- Avisa quando nenhum host com IP é encontrado.
 
 ---
 
-## Sugestões de melhorias
+## Limitações Conhecidas
 
-* Adicionar suporte HTTPS e redirecionamentos.
-* Parsing robusto com `htmlq`/`pup` para pegar hrefs em formatos diferentes.
-* Paralelizar downloads para acelerar o script.
-* Adicionar opções de log, verbose ou saída personalizada (`--output`).
-* Suporte a arquivos de subdomínios ou ranges personalizados.
-* Melhor tratamento de arquivos temporários com `trap` (já presente em parsing.visual.sh).
+Inerentes ao caráter de estudo do script:
 
----
-
-## Boas práticas
-
-* Não usar em redes/domínios sem permissão.
-* Cuidado com arquivos temporários e dados sensíveis.
-* Respeitar políticas e `robots.txt` do alvo.
+1. Parsing de HTML baseado em `href` simples (não cobre todos os formatos).
+2. Coleta apenas os hosts da página principal; não enumera subdomínios por força bruta.
+3. Execução sequencial na resolução dos IPs.
 
 ---
 
+## Sugestões de Melhoria (exercícios)
 
-## Changelog
-
-* v0.1 — README inicial para estudo de `parsing.sh` e `parsing.visual.sh`.
-* v0.2 — Documentação das diferenças, saídas e sugestões de melhoria, destacando caráter educativo.
+- Parsing mais robusto com ferramentas como `htmlq` ou `pup`.
+- Paralelizar a resolução de IPs para acelerar a execução.
+- Opções de linha de comando (`--output`, modo verbose, formato CSV).
+- Suporte a listas de domínios ou a ranges personalizados.
+- Destaque para hosts fora do domínio principal (referências a terceiros).
 
 ---
 
-> Nota: Este projeto é um estudo de parsing HTML. O script `parsing.visual.sh` recebeu ajuda de IA apenas para melhorar a visualização da saída e facilitar o entendimento, enquanto `parsing.sh` foi feito manualmente como exercício.
+## Boas Práticas e Ética
+
+- Não utilizar em redes ou domínios sem permissão.
+- Respeitar as políticas e o `robots.txt` do alvo.
+- Cuidado com arquivos temporários e dados sensíveis.
+
+---
+
+## Nota Final
+
+Projeto de estudo de parsing de HTML e automação em Bash. O objetivo é compreender, de forma prática, como ferramentas de reconhecimento coletam e organizam informações públicas de um alvo — base da fase de reconhecimento em um pentest.
+
+---
+
+Desenvolvido por duts00 — projeto de estudo em segurança da informação
